@@ -36,5 +36,12 @@ target 'AttendanceTracker' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # ✅ Exclude arm64 arch for simulator builds to fix MLKit linker issues
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      end
+    end
   end
 end
