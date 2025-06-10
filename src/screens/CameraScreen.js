@@ -14,6 +14,8 @@ import {
 import {Worklets} from 'react-native-worklets-core';
 
 export default function App() {
+  const [faces, setFaces] = useState([]);
+
   const faceDetectionOptions =
     useRef <
     FaceDetectionOptions >
@@ -31,31 +33,20 @@ export default function App() {
     })();
   }, [device]);
 
-  const previousFacesRef = useRef([]);
-
-  const handleDetectedFaces = Worklets.createRunOnJS((faces: Face[]) => {
-    const prevFaces = previousFacesRef.current;
-    const faceCountChanged = faces.length !== prevFaces.length;
-
-    if (faceCountChanged) {
-      console.log('faces detected', faces);
-    }
-
-    previousFacesRef.current = faces;
+  const handleDetectedFaces = Worklets.createRunOnJS((detectedFaces: Face[]) => {
+      console.log('faces detected', detectedFaces);
+      setFaces(detectedFaces);
   });
 
   const frameProcessor = useFrameProcessor(
     frame => {
       'worklet';
+      console.log("frame: ", JSON.stringify(frame)) // <-- "rgb"
       runAsync(frame, () => {
         'worklet';
-        const faces = detectFaces(frame);
-        // ... chain some asynchronous frame processor
-        // ... do something asynchronously with frame
-        handleDetectedFaces(faces);
+        const detectedFaces = detectFaces(frame);
+        handleDetectedFaces(detectedFaces);
       });
-      // ... chain frame processors
-      // ... do something with frame
     },
     [handleDetectedFaces],
   );
@@ -72,6 +63,31 @@ export default function App() {
       ) : (
         <Text>No Device</Text>
       )}
+
+      {/* Render face rectangles */}
+      {faces.map((face, index) => (
+        <View
+          key={index}
+          style={[
+            styles.faceRect,
+            {
+              top: face.bounds.y,
+              left: face.bounds.x - 50,
+              width: face.bounds.width + 70,
+              height: face.bounds.height + 70,
+            },
+          ]}
+        />
+      ))}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  faceRect: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderColor: 'lime',
+    borderRadius: 4,
+  },
+});
