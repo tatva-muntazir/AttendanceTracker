@@ -31,8 +31,17 @@ export default function App() {
     })();
   }, [device]);
 
+  const previousFacesRef = useRef([]);
+
   const handleDetectedFaces = Worklets.createRunOnJS((faces: Face[]) => {
-    console.log('faces detected', faces);
+    const prevFaces = previousFacesRef.current;
+    const faceCountChanged = faces.length !== prevFaces.length;
+
+    if (faceCountChanged) {
+      console.log('faces detected', faces);
+    }
+
+    previousFacesRef.current = faces;
   });
 
   const frameProcessor = useFrameProcessor(
